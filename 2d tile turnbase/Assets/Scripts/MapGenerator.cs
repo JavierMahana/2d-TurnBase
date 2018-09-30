@@ -59,7 +59,7 @@ public class MapGenerator : MonoBehaviour {
             if (c.color == pixelColor)
             {
 
-                GameObject g = Instantiate(c.prefav, new Vector3(x, y, 0), Quaternion.identity, map.transform);
+                GameObject g = Instantiate(c.prefav, new Vector3(x, y, 0), Quaternion.identity, map.transform.GetChild(0));
                 newTile = g.GetComponent<Tile>();
                 newTile.TileUpdate();
                 

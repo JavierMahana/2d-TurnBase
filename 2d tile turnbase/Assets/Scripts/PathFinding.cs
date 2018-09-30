@@ -4,6 +4,7 @@ using UnityEngine;
 
 public static class PathFinding {
 
+
     struct NodeRecord
     {
         public Tile node;
@@ -11,105 +12,162 @@ public static class PathFinding {
         public Conection conection;
         public int estimatedCost;
     }
-
-    public static List<Tile> Dijkstras(Map map, Tile start, int movement)
+    /// <summary>
+    /// dadas una lista de tiles y una unidad retorna todas las tiles a las que puede atacar
+    /// </summary>
+    /// <param name="map"></param>
+    /// <param name="canMoveTiles"></param>
+    /// <param name="unit"></param>
+    /// <returns></returns>
+    public static List<Tile> GetCanAtackTiles(Map map, List<Tile> canMoveTiles, Unit unit)
     {
-
-        
+        //no devuelve nada :C
         List<Tile> output = new List<Tile>();
-        int contador = 0;
+        Debug.Assert(canMoveTiles.Count > 0);
+        int i = 0;
+        foreach (int range in unit.weaponRange)
+        {
+            foreach (Tile tile in canMoveTiles)
+            {
+                
+                List<Tile> temporal = GetTilesAtDistance(map, tile, range);
+                Debug.Log(i.ToString() + " vuelta. Hay temporales" + temporal.Count.ToString());
+                i++;
+
+                foreach (Tile tempTile in temporal)
+                {
+                    //se be si la tile ya se ha agragado.
+                    //si no esta, se agrega al output
+                    if (output.Contains(tempTile) == false)
+                    {
+                        output.Add(tempTile);
+                    }
+                }
+            }
+        }
+        return output;
+    }
+
+    /// <summary>
+    /// Retorna todas las tiles a las que una unidad se puede mover
+    /// </summary>
+    /// <param name="map"></param>
+    /// <param name="start"></param>
+    /// <param name="unit"></param>
+    /// <returns></returns>
+    public static List<Tile> GetCanMoveTiles(Map map, Unit unit)
+    {
+        int movement = unit.movementLeft;
+
+        List<Tile> output = new List<Tile>();
         List<NodeRecord> open = new List<NodeRecord>();
         List<NodeRecord> closed = new List<NodeRecord>();
 
         NodeRecord current = new NodeRecord();
 
-        current.node = start;
+        current.node = unit.standingTile;
         current.costSoFar = 0;
 
         open.Add(current);
+        int width = map.GetWidth();
+        int heigth = map.GetHeigth();
 
-        while (current.costSoFar <= movement|| open.Count == 0)
+        while (current.costSoFar <= movement && open.Count > 0)
         {
 
-            contador++;
-            Debug.Log(contador.ToString());
 
             int x = (int)current.node.transform.position.x;
             int y = (int)current.node.transform.position.y;
 
-            int width = map.GetWidth();
-            int heigth = map.GetHeigth();
+
 
             // si esta en el limite izquierdo (x = 0) no hay coneccion a la izquierda
             if (x > 0)
             {
-                
+
                 Tile leftTile = map.GetTile(x - 1, y);
 
-                //aca se ve si la tile es Inpasable
-                //leftTile.Evaluate();
-
-                if (Contains(open,leftTile) == false)
+                //se debe ver si la tile es pasable, debido a la unidad que esta encima
+                if (leftTile.Evaluate(unit))
                 {
-                    if (Contains(closed,leftTile) == false)
+                    //aca se ve si la tile es Inpasable
+                    if (Contains(open, leftTile) == false)
                     {
-                        NodeRecord newRecord = new NodeRecord();
-                        newRecord.node = leftTile;
-                        newRecord.costSoFar = leftTile.terrain.movementCost + current.costSoFar;
-                        open.Add(newRecord);
+                        if (Contains(closed, leftTile) == false)
+                        {
+                            NodeRecord newRecord = new NodeRecord();
+                            newRecord.node = leftTile;
+                            newRecord.costSoFar = leftTile.terrain.movementCost + current.costSoFar;
+                            open.Add(newRecord);
+                        }
                     }
                 }
+
 
             }
             // si esta en el limite derecho (x = width) no hay coneccion a la derecha
             if (x < width)
             {
-                
-                Tile rigthTile = map.GetTile(x + 1 , y);
-                if (Contains(open, rigthTile) == false)
+
+                Tile rigthTile = map.GetTile(x + 1, y);
+
+                if (rigthTile.Evaluate(unit))
                 {
-                    if (Contains(closed, rigthTile) == false)
+                    if (Contains(open, rigthTile) == false)
                     {
-                        NodeRecord newRecord = new NodeRecord();
-                        newRecord.node = rigthTile;
-                        newRecord.costSoFar = rigthTile.terrain.movementCost + current.costSoFar;
-                        open.Add(newRecord);
+                        if (Contains(closed, rigthTile) == false)
+                        {
+                            NodeRecord newRecord = new NodeRecord();
+                            newRecord.node = rigthTile;
+                            newRecord.costSoFar = rigthTile.terrain.movementCost + current.costSoFar;
+                            open.Add(newRecord);
+                        }
                     }
                 }
+
 
             }
             // si esta en el limite inferior (y = 0) no hay coneccion hacia abajo
             if (y > 0)
             {
-                
+
                 Tile downTile = map.GetTile(x, y - 1);
-                if (Contains(open, downTile) == false)
+
+                if (downTile.Evaluate(unit))
                 {
-                    if (Contains(closed, downTile) == false)
+                    if (Contains(open, downTile) == false)
                     {
-                        NodeRecord newRecord = new NodeRecord();
-                        newRecord.node = downTile;
-                        newRecord.costSoFar = downTile.terrain.movementCost + current.costSoFar;
-                        open.Add(newRecord);
+                        if (Contains(closed, downTile) == false)
+                        {
+                            NodeRecord newRecord = new NodeRecord();
+                            newRecord.node = downTile;
+                            newRecord.costSoFar = downTile.terrain.movementCost + current.costSoFar;
+                            open.Add(newRecord);
+                        }
                     }
                 }
+
 
             }
             // si esta en el limite superior (y = heigth) no hay coneccion hacia arriba
             if (y < heigth)
             {
-                
+
                 Tile upperTile = map.GetTile(x, y + 1);
-                if (Contains(open, upperTile) == false)
+                if (upperTile.Evaluate(unit))
                 {
-                    if (Contains(closed, upperTile) == false)
+                    if (Contains(open, upperTile) == false)
                     {
-                        NodeRecord newRecord = new NodeRecord();
-                        newRecord.node = upperTile;
-                        newRecord.costSoFar = upperTile.terrain.movementCost + current.costSoFar;
-                        open.Add(newRecord);
+                        if (Contains(closed, upperTile) == false)
+                        {
+                            NodeRecord newRecord = new NodeRecord();
+                            newRecord.node = upperTile;
+                            newRecord.costSoFar = upperTile.terrain.movementCost + current.costSoFar;
+                            open.Add(newRecord);
+                        }
                     }
                 }
+
 
             }
             //se termino de revisar las conecciones
@@ -120,12 +178,148 @@ public static class PathFinding {
 
 
             //find the smallest element in open
+            if (open.Count <= 0)
+            {
+                break;
+            }
             current = SmallestNodeInListCSF(open);
         }
         //se termino de revisar
         return output;
     }
-    public static List<Conection> AStar(Map map, Tile start, Tile goal, int movement)
+
+
+    static List<Tile> GetTilesAtDistance(Map map, Tile tile, int distance)
+    {
+        //debe Retornar todas las tiles que esten a cierta distancia de x tile
+        List<Tile> output = new List<Tile>();
+
+        List<NodeRecord> open = new List<NodeRecord>();
+        List<NodeRecord> closed = new List<NodeRecord>();
+
+        NodeRecord current = new NodeRecord();
+        current.node = tile;
+        current.costSoFar = 0;
+        open.Add(current);
+
+        int width = map.GetWidth();
+        int heigth = map.GetHeigth();
+        
+
+        while (open.Count > 0 && current.costSoFar < distance)
+        {
+            
+            
+            int x = (int)current.node.transform.position.x;
+            int y = (int)current.node.transform.position.y;
+
+            //Debug.Log(x.ToString() + "|" + y.ToString());
+            
+            //Debug.Log(current.costSoFar.ToString());
+
+            // si esta en el limite izquierdo (x = 0) no hay coneccion a la izquierda
+            if (x > 0)
+            {
+
+                Tile leftTile = map.GetTile(x - 1, y);
+                
+                if (Contains(open, leftTile) == false)
+                {
+                    if (Contains(closed, leftTile) == false)
+                    {
+                        NodeRecord newRecord = new NodeRecord();
+                        newRecord.node = leftTile;
+                        newRecord.costSoFar = 1 + current.costSoFar;
+                        open.Add(newRecord);
+                        if (newRecord.costSoFar == distance)
+                        {
+                            output.Add(newRecord.node);
+                        }
+                    }
+                }
+
+            }
+            // si esta en el limite derecho (x = width) no hay coneccion a la derecha
+            if (x < width - 1)
+            {
+                
+                Tile rigthTile = map.GetTile(x + 1, y);
+
+                if (Contains(open, rigthTile) == false)
+                {
+                    if (Contains(closed, rigthTile) == false)
+                    {
+                        NodeRecord newRecord = new NodeRecord();
+                        newRecord.node = rigthTile;
+                        newRecord.costSoFar = 1 + current.costSoFar;
+                        open.Add(newRecord);
+                        if (newRecord.costSoFar == distance)
+                        {
+                            output.Add(newRecord.node);
+                        }
+                    }
+                }
+
+            }
+            // si esta en el limite inferior (y = 0) no hay coneccion hacia abajo
+            if (y > 0)
+            {
+
+                Tile downTile = map.GetTile(x, y - 1);
+
+                if (Contains(open, downTile) == false)
+                {
+                    if (Contains(closed, downTile) == false)
+                    {
+                        NodeRecord newRecord = new NodeRecord();
+                        newRecord.node = downTile;
+                        newRecord.costSoFar = 1 + current.costSoFar;
+                        open.Add(newRecord);
+                        if (newRecord.costSoFar == distance)
+                        {
+                            output.Add(newRecord.node);
+                        }
+                    }
+                }
+            }
+            // si esta en el limite superior (y = heigth) no hay coneccion hacia arriba
+            if (y < heigth - 1)
+            {
+
+                Tile upperTile = map.GetTile(x, y + 1);
+
+                if (Contains(open, upperTile) == false)
+                {
+                    if (Contains(closed, upperTile) == false)
+                    {
+                        NodeRecord newRecord = new NodeRecord();
+                        newRecord.node = upperTile;
+                        newRecord.costSoFar = 1 + current.costSoFar;
+                        open.Add(newRecord);
+                        if (newRecord.costSoFar == distance)
+                        {
+                            output.Add(newRecord.node);
+                        }
+                    }
+                }
+            }
+            open.Remove(current);
+            closed.Add(current);
+
+            //find the smallest element in open
+            if (open.Count <= 0)
+            {
+                break;
+            }
+            current = SmallestNodeInListCSF(open);
+
+        }
+
+        return output;
+
+    }
+
+    public static List<Conection> AStar(Map map, Tile start, Tile goal)
     {
         List<Conection> output = new List<Conection>();
 
@@ -143,6 +337,10 @@ public static class PathFinding {
 
         NodeRecord current = startRecord;
 
+        int width = map.GetWidth();
+        int heigth = map.GetHeigth();
+
+
         while (open.Count > 0)
         {
             if (current.node == goal)
@@ -154,9 +352,7 @@ public static class PathFinding {
             int x = (int)current.node.transform.position.x;
             int y = (int)current.node.transform.position.y;
 
-            int width = map.GetWidth();
-            int heigth = map.GetHeigth();
-
+           
             // si esta en el limite izquierdo (x = 0) no hay coneccion a la izquierda
             if (x > 0)
             {
@@ -352,6 +548,7 @@ public static class PathFinding {
         return output;
 
     }
+
     static NodeRecord EstimatedSmallestNodeInList(List<NodeRecord> list)
     {
         
@@ -366,7 +563,6 @@ public static class PathFinding {
         return smallestNode;
 
     }
-
     static bool Contains(List<NodeRecord> list, Tile node)
     {
         foreach (NodeRecord record in list)
@@ -391,7 +587,6 @@ public static class PathFinding {
         NodeRecord nuevo = new NodeRecord();
         return nuevo;
     }
-
     static NodeRecord SmallestNodeInListCSF(List<NodeRecord> list)
     {
         NodeRecord smallestNode = list[0];
@@ -404,7 +599,6 @@ public static class PathFinding {
         }
         return smallestNode;
     }
-
     static int GetDistance(Tile t1, Tile t2)
     {
         int xDif = Mathf.Abs((int)(t1.transform.position.x - t2.transform.position.x));

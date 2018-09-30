@@ -16,6 +16,7 @@ public class Unit : MonoBehaviour {
     public int movement;
     public int movementLeft;
     public UnitState state;
+    public int[] weaponRange;
 
     public Tile standingTile;
     Map map;

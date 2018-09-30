@@ -11,6 +11,10 @@ public class UnitSpawner : MonoBehaviour {
 
     private void Start()
     {
+        if (unitSpawningInfo == null)
+        {
+            return;
+        }
         mapGen = GameObject.FindObjectOfType<MapGenerator>();
         //hay que asegurarse que las 2 texturas tienen las mismas proporciones;
         Debug.Assert(mapGen.dataToGenerateMap.width == unitSpawningInfo.width && mapGen.dataToGenerateMap.height == unitSpawningInfo.height, "the 2 textures must have the same bunds");
@@ -38,6 +42,7 @@ public class UnitSpawner : MonoBehaviour {
                     if (pixelColor == m.color)
                     {
                         Unit newUnit = m.prefav.GetComponent<Unit>();
+                        
                         GameObject newObject = Instantiate(m.prefav, new Vector3(x, y, 0), Quaternion.identity, container.transform);
                         container.unitList.Add(newUnit);
                     }

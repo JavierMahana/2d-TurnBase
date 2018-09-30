@@ -18,18 +18,31 @@ public class Selector : MonoBehaviour {
 	void Start () {
         previouslySelected = tileSelected;
         map = GameObject.FindObjectOfType<Map>().GetComponent<Map>();
-        
 	}
 	
 	void Update ()
     {
         Select();
-        NotifyIfSelectionChanges();
+        NotifyChanges();
 	}
-    void NotifyIfSelectionChanges()
+    
+
+
+    void NotifyChanges()
     {
-        if (previouslySelected != tileSelected)
+        if (TheSelectionHasChange())
         {
+
+            
+            if (previouslySelected.isOcupied)
+            {
+                if (deselectEvent != null)
+                {
+                    deselectEvent();
+                }
+            }
+
+
             if (tileSelected.isOcupied)
             {
                 if (selectionEvent != null)
@@ -39,19 +52,12 @@ public class Selector : MonoBehaviour {
             }
             else
             {
-                deselectEvent();
-                previouslySelected = tileSelected;
-                return;
-            }
-            if (previouslySelected.isOcupied)
-            {
                 if (deselectEvent != null)
                 {
                     deselectEvent();
                 }
             }
         }
-        previouslySelected = tileSelected;
     }
 
 
@@ -59,6 +65,8 @@ public class Selector : MonoBehaviour {
     {
         if (Input.GetMouseButtonDown(0))
         {
+            
+
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
             if (Physics.Raycast(ray, out hit, 30f))
@@ -72,6 +80,15 @@ public class Selector : MonoBehaviour {
         
     }
 
-    
+    bool TheSelectionHasChange()
+    {
+        if (previouslySelected != tileSelected)
+        {
+            previouslySelected = tileSelected;
+            return true;
+        }
+        previouslySelected = tileSelected;
+        return false;
+    }
 
 }
