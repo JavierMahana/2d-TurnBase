@@ -17,15 +17,19 @@ public class Unit : MonoBehaviour {
     public int movementLeft;
     public UnitState state;
     public int[] weaponRange;
+    
 
     public Tile standingTile;
     Map map;
-    
+    [HideInInspector]
+    public Animator animator;
 
-	
-	void Start ()
+
+    void Start ()
     {
+        
         map = GameObject.FindObjectOfType<Map>();
+        animator = transform.GetComponentInChildren<Animator>();
         //subscribe to selections events
         //FindObjectOfType<Selector>().selectEvent += OnSelect;
         SetOcupiedTile();

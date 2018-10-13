@@ -6,14 +6,16 @@ public class MovementVisualAid : MonoBehaviour
 {
     public List<Tile> displayedCanMoveTiles = new List<Tile>();
     public List<Tile> displayedCanAtackToTiles = new List<Tile>();
+
     Map map;
 
     void Start()
     {
         Selector selector = GameObject.FindObjectOfType<Selector>();
         map = GameObject.FindObjectOfType<Map>();
+
+
         selector.selectionEvent += Show;
-        
 
         selector.deselectEvent += Hide;
         
@@ -21,47 +23,57 @@ public class MovementVisualAid : MonoBehaviour
     }
 
 
-    public void Show(Unit unit)
+    public void ShowMovementPath(Unit unit)
     {
+
+    }
+
+
+    public void Show(Tile other)
+    {
+        if (other.isOcupied == false)
+        {
+            return;
+        }
+        Unit unit = other.unitAbove;
         ShowMovementOptions(unit);
         ShowAtackOptions(unit);
     }
-
-    public void Hide()
-    {
-        HideMovementOptions();
-        HideAtackOptions();
-    }
-    
     void ShowMovementOptions(Unit unit)
     {
 
         displayedCanMoveTiles = PathFinding.GetCanMoveTiles(map, unit);
         foreach (Tile tile in displayedCanMoveTiles)
         {
-            //set the tiles parameter to true, to activate the animation
+
             Animator a = tile.transform.GetComponentInChildren<Animator>();
             a.SetBool("CanMoveTo", true);
         }
-        
-    }
 
+    }
     void ShowAtackOptions(Unit unit)
     {
-        
         displayedCanAtackToTiles = PathFinding.GetCanAtackTiles(map, displayedCanMoveTiles, unit);
-        //Debug.Log(displayedCanAtackToTiles.Count.ToString()); // 0 en todas las frames
+
         foreach (Tile tile in displayedCanAtackToTiles)
         {
+
             Animator a = tile.transform.GetComponentInChildren<Animator>();
             a.SetBool("CanAtackTo", true);
         }
     }
 
 
+
+    public void Hide()
+    {
+        HideMovementOptions();
+        HideAtackOptions();
+       
+    }
     void HideMovementOptions()
     {
-        
+
         foreach (Tile tile in displayedCanMoveTiles)
         {
             //set the tiles parameter to false, to activate the animation
@@ -70,7 +82,6 @@ public class MovementVisualAid : MonoBehaviour
         }
         displayedCanMoveTiles.Clear();
     }
-
     void HideAtackOptions()
     {
 
@@ -82,6 +93,7 @@ public class MovementVisualAid : MonoBehaviour
         }
         displayedCanMoveTiles.Clear();
     }
+
 
 
 

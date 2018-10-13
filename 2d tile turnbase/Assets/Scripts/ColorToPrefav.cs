@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿//Almacena datos para la generación del mapa por medio de una textura
 using UnityEngine;
 
 [System.Serializable]

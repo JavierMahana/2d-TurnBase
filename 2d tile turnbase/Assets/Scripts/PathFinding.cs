@@ -4,8 +4,7 @@ using UnityEngine;
 
 public static class PathFinding {
 
-
-    struct NodeRecord
+    public struct NodeRecord
     {
         public Tile node;
         public int costSoFar;
@@ -21,18 +20,18 @@ public static class PathFinding {
     /// <returns></returns>
     public static List<Tile> GetCanAtackTiles(Map map, List<Tile> canMoveTiles, Unit unit)
     {
-        //no devuelve nada :C
+        //genera mucha basura
         List<Tile> output = new List<Tile>();
         Debug.Assert(canMoveTiles.Count > 0);
-        int i = 0;
+        
         foreach (int range in unit.weaponRange)
         {
             foreach (Tile tile in canMoveTiles)
             {
                 
                 List<Tile> temporal = GetTilesAtDistance(map, tile, range);
-                Debug.Log(i.ToString() + " vuelta. Hay temporales" + temporal.Count.ToString());
-                i++;
+               
+                
 
                 foreach (Tile tempTile in temporal)
                 {
@@ -63,7 +62,7 @@ public static class PathFinding {
         List<NodeRecord> open = new List<NodeRecord>();
         List<NodeRecord> closed = new List<NodeRecord>();
 
-        NodeRecord current = new NodeRecord();
+        NodeRecord current = NodeRecordPool.pool.Dequeue();
 
         current.node = unit.standingTile;
         current.costSoFar = 0;
@@ -95,7 +94,7 @@ public static class PathFinding {
                     {
                         if (Contains(closed, leftTile) == false)
                         {
-                            NodeRecord newRecord = new NodeRecord();
+                            NodeRecord newRecord = NodeRecordPool.pool.Dequeue();
                             newRecord.node = leftTile;
                             newRecord.costSoFar = leftTile.terrain.movementCost + current.costSoFar;
                             open.Add(newRecord);
@@ -106,7 +105,7 @@ public static class PathFinding {
 
             }
             // si esta en el limite derecho (x = width) no hay coneccion a la derecha
-            if (x < width)
+            if (x < width - 1)
             {
 
                 Tile rigthTile = map.GetTile(x + 1, y);
@@ -117,7 +116,7 @@ public static class PathFinding {
                     {
                         if (Contains(closed, rigthTile) == false)
                         {
-                            NodeRecord newRecord = new NodeRecord();
+                            NodeRecord newRecord = NodeRecordPool.pool.Dequeue();
                             newRecord.node = rigthTile;
                             newRecord.costSoFar = rigthTile.terrain.movementCost + current.costSoFar;
                             open.Add(newRecord);
@@ -139,7 +138,7 @@ public static class PathFinding {
                     {
                         if (Contains(closed, downTile) == false)
                         {
-                            NodeRecord newRecord = new NodeRecord();
+                            NodeRecord newRecord = NodeRecordPool.pool.Dequeue();
                             newRecord.node = downTile;
                             newRecord.costSoFar = downTile.terrain.movementCost + current.costSoFar;
                             open.Add(newRecord);
@@ -150,7 +149,7 @@ public static class PathFinding {
 
             }
             // si esta en el limite superior (y = heigth) no hay coneccion hacia arriba
-            if (y < heigth)
+            if (y < heigth - 1)
             {
 
                 Tile upperTile = map.GetTile(x, y + 1);
@@ -160,7 +159,7 @@ public static class PathFinding {
                     {
                         if (Contains(closed, upperTile) == false)
                         {
-                            NodeRecord newRecord = new NodeRecord();
+                            NodeRecord newRecord = NodeRecordPool.pool.Dequeue();
                             newRecord.node = upperTile;
                             newRecord.costSoFar = upperTile.terrain.movementCost + current.costSoFar;
                             open.Add(newRecord);
@@ -185,6 +184,14 @@ public static class PathFinding {
             current = SmallestNodeInListCSF(open);
         }
         //se termino de revisar
+        foreach (NodeRecord nodeRecord in open)
+        {
+            NodeRecordPool.pool.Enqueue(nodeRecord);
+        }
+        foreach (NodeRecord nodeRecord in closed)
+        {
+            NodeRecordPool.pool.Enqueue(nodeRecord);
+        }
         return output;
     }
 
@@ -197,7 +204,7 @@ public static class PathFinding {
         List<NodeRecord> open = new List<NodeRecord>();
         List<NodeRecord> closed = new List<NodeRecord>();
 
-        NodeRecord current = new NodeRecord();
+        NodeRecord current = NodeRecordPool.pool.Dequeue();
         current.node = tile;
         current.costSoFar = 0;
         open.Add(current);
@@ -227,7 +234,7 @@ public static class PathFinding {
                 {
                     if (Contains(closed, leftTile) == false)
                     {
-                        NodeRecord newRecord = new NodeRecord();
+                        NodeRecord newRecord = NodeRecordPool.pool.Dequeue();
                         newRecord.node = leftTile;
                         newRecord.costSoFar = 1 + current.costSoFar;
                         open.Add(newRecord);
@@ -249,7 +256,7 @@ public static class PathFinding {
                 {
                     if (Contains(closed, rigthTile) == false)
                     {
-                        NodeRecord newRecord = new NodeRecord();
+                        NodeRecord newRecord = NodeRecordPool.pool.Dequeue();
                         newRecord.node = rigthTile;
                         newRecord.costSoFar = 1 + current.costSoFar;
                         open.Add(newRecord);
@@ -271,7 +278,7 @@ public static class PathFinding {
                 {
                     if (Contains(closed, downTile) == false)
                     {
-                        NodeRecord newRecord = new NodeRecord();
+                        NodeRecord newRecord = NodeRecordPool.pool.Dequeue();
                         newRecord.node = downTile;
                         newRecord.costSoFar = 1 + current.costSoFar;
                         open.Add(newRecord);
@@ -292,7 +299,7 @@ public static class PathFinding {
                 {
                     if (Contains(closed, upperTile) == false)
                     {
-                        NodeRecord newRecord = new NodeRecord();
+                        NodeRecord newRecord = NodeRecordPool.pool.Dequeue();
                         newRecord.node = upperTile;
                         newRecord.costSoFar = 1 + current.costSoFar;
                         open.Add(newRecord);
@@ -314,19 +321,32 @@ public static class PathFinding {
             current = SmallestNodeInListCSF(open);
 
         }
-
+        foreach (NodeRecord nodeRecord in open)
+        {
+            NodeRecordPool.pool.Enqueue(nodeRecord);
+        }
+        foreach (NodeRecord nodeRecord in closed)
+        {
+            NodeRecordPool.pool.Enqueue(nodeRecord);
+        }
         return output;
 
     }
-
-    public static List<Conection> AStar(Map map, Tile start, Tile goal)
+    /// <summary>
+    /// Entrega las conecciones para el camino más corto entre 2 tiles
+    /// </summary>
+    /// <param name="map"></param>
+    /// <param name="start"></param>
+    /// <param name="goal"></param>
+    /// <returns></returns>
+    public static List<Tile> AStar(Map map, Tile start, Tile goal)
     {
-        List<Conection> output = new List<Conection>();
+        List<Tile> output = new List<Tile>();
 
         List<NodeRecord> open = new List<NodeRecord>();
         List<NodeRecord> closed = new List<NodeRecord>();
 
-        NodeRecord startRecord = new NodeRecord();
+        NodeRecord startRecord = NodeRecordPool.pool.Dequeue();
 
         startRecord.node = start;
         startRecord.estimatedCost = GetDistance(start, goal);
@@ -347,207 +367,198 @@ public static class PathFinding {
             {
                 break;
             }
-
-            //tener conecciones y veciones(mismo codigo que diskras)
             int x = (int)current.node.transform.position.x;
             int y = (int)current.node.transform.position.y;
 
            
-            // si esta en el limite izquierdo (x = 0) no hay coneccion a la izquierda
             if (x > 0)
             {
-
                 Tile endTile = map.GetTile(x - 1, y);
-
-                if (Contains(open, endTile))
-                {
-                    int newCostSoFar = endTile.terrain.movementCost + current.costSoFar;
-                    NodeRecord oldRecord = Find(open, endTile);
-                    //mejorRuta crear record y borrar antiguo
-                    if (oldRecord.costSoFar > newCostSoFar)
-                    {
-                        NodeRecord newRecord = new NodeRecord();
-                        newRecord.node = endTile;
-                        newRecord.costSoFar = newCostSoFar;
-                        newRecord.estimatedCost = GetDistance(endTile, goal) + newRecord.costSoFar;
-                        newRecord.conection = new Conection(current.node, endTile);
-                        
-                        open.Add(newRecord);
-                        open.Remove(oldRecord);
-                    }
-                }
-                if (Contains(closed, endTile))
-                {
-                    int newCostSoFar = endTile.terrain.movementCost + current.costSoFar;
-                    NodeRecord oldRecord = Find(closed, endTile);
-                    //mejor ruta borrar antigua
-                    if (oldRecord.costSoFar > newCostSoFar)
-                    {
-                        NodeRecord newRecord = new NodeRecord();
-                        newRecord.node = endTile;
-                        newRecord.costSoFar = newCostSoFar;
-                        newRecord.estimatedCost = GetDistance(endTile, goal) + newRecord.costSoFar;
-                        newRecord.conection = new Conection(current.node, endTile);
-                        
-                        closed.Remove(oldRecord);
-                        open.Add(newRecord);
-                    }
-                    
-                }
-
+                UpdateOrCreateRecordInOpenList(goal, open, closed, current, endTile);
             }
-            // si esta en el limite derecho (x = width) no hay coneccion a la derecha
-            if (x < width)
+            if (x <  width - 1)
             {
-
-                Tile endTile = map.GetTile(x - 1, y);
-
-                if (Contains(open, endTile))
-                {
-                    int newCostSoFar = endTile.terrain.movementCost + current.costSoFar;
-                    NodeRecord oldRecord = Find(open, endTile);
-                    //mejorRuta crear record y borrar antiguo
-                    if (oldRecord.costSoFar > newCostSoFar)
-                    {
-                        NodeRecord newRecord = new NodeRecord();
-                        newRecord.node = endTile;
-                        newRecord.costSoFar = newCostSoFar;
-                        newRecord.estimatedCost = GetDistance(endTile, goal) + newRecord.costSoFar;
-                        newRecord.conection = new Conection(current.node, endTile);
-
-                        open.Add(newRecord);
-                        open.Remove(oldRecord);
-                    }
-                }
-                if (Contains(closed, endTile))
-                {
-                    int newCostSoFar = endTile.terrain.movementCost + current.costSoFar;
-                    NodeRecord oldRecord = Find(closed, endTile);
-                    //mejor ruta borrar antigua
-                    if (oldRecord.costSoFar > newCostSoFar)
-                    {
-                        NodeRecord newRecord = new NodeRecord();
-                        newRecord.node = endTile;
-                        newRecord.costSoFar = newCostSoFar;
-                        newRecord.estimatedCost = GetDistance(endTile, goal) + newRecord.costSoFar;
-                        newRecord.conection = new Conection(current.node, endTile);
-
-                        closed.Remove(oldRecord);
-                        open.Add(newRecord);
-                    }
-
-                }
-
+                Tile endTile = map.GetTile(x + 1, y);
+                UpdateOrCreateRecordInOpenList(goal, open, closed, current, endTile);
             }
-            // si esta en el limite inferior (y = 0) no hay coneccion hacia abajo
             if (y > 0)
             {
-
-                Tile endTile = map.GetTile(x - 1, y);
-
-                if (Contains(open, endTile))
-                {
-                    int newCostSoFar = endTile.terrain.movementCost + current.costSoFar;
-                    NodeRecord oldRecord = Find(open, endTile);
-                    //mejorRuta crear record y borrar antiguo
-                    if (oldRecord.costSoFar > newCostSoFar)
-                    {
-                        NodeRecord newRecord = new NodeRecord();
-                        newRecord.node = endTile;
-                        newRecord.costSoFar = newCostSoFar;
-                        newRecord.estimatedCost = GetDistance(endTile, goal) + newRecord.costSoFar;
-                        newRecord.conection = new Conection(current.node, endTile);
-
-                        open.Add(newRecord);
-                        open.Remove(oldRecord);
-                    }
-                }
-                if (Contains(closed, endTile))
-                {
-                    int newCostSoFar = endTile.terrain.movementCost + current.costSoFar;
-                    NodeRecord oldRecord = Find(closed, endTile);
-                    //mejor ruta borrar antigua
-                    if (oldRecord.costSoFar > newCostSoFar)
-                    {
-                        NodeRecord newRecord = new NodeRecord();
-                        newRecord.node = endTile;
-                        newRecord.costSoFar = newCostSoFar;
-                        newRecord.estimatedCost = GetDistance(endTile, goal) + newRecord.costSoFar;
-                        newRecord.conection = new Conection(current.node, endTile);
-
-                        closed.Remove(oldRecord);
-                        open.Add(newRecord);
-                    }
-                }
-
+                Tile endTile = map.GetTile(x , y - 1 );
+                UpdateOrCreateRecordInOpenList(goal, open, closed, current, endTile);
             }
-            // si esta en el limite superior (y = heigth) no hay coneccion hacia arriba
-            if (y < heigth)
+            if (y < heigth - 1)
             {
-                Tile endTile = map.GetTile(x - 1, y);
-
-                if (Contains(open, endTile))
-                {
-                    int newCostSoFar = endTile.terrain.movementCost + current.costSoFar;
-                    NodeRecord oldRecord = Find(open, endTile);
-                    //mejorRuta crear record y borrar antiguo
-                    if (oldRecord.costSoFar > newCostSoFar)
-                    {
-                        NodeRecord newRecord = new NodeRecord();
-                        newRecord.node = endTile;
-                        newRecord.costSoFar = newCostSoFar;
-                        newRecord.estimatedCost = GetDistance(endTile, goal) + newRecord.costSoFar;
-                        newRecord.conection = new Conection(current.node, endTile);
-
-                        open.Add(newRecord);
-                        open.Remove(oldRecord);
-                    }
-                }
-                if (Contains(closed, endTile))
-                {
-                    int newCostSoFar = endTile.terrain.movementCost + current.costSoFar;
-                    NodeRecord oldRecord = Find(closed, endTile);
-                    //mejor ruta borrar antigua
-                    if (oldRecord.costSoFar > newCostSoFar)
-                    {
-                        NodeRecord newRecord = new NodeRecord();
-                        newRecord.node = endTile;
-                        newRecord.costSoFar = newCostSoFar;
-                        newRecord.estimatedCost = GetDistance(endTile, goal) + newRecord.costSoFar;
-                        newRecord.conection = new Conection(current.node, endTile);
-
-                        closed.Remove(oldRecord);
-                        open.Add(newRecord);
-                    }
-
-                }
+                Tile endTile = map.GetTile(x, y + 1);
+                UpdateOrCreateRecordInOpenList(goal, open, closed, current, endTile);
             }
-            //se termino de revisar las conecciones
             closed.Add(current);
             open.Remove(current);
 
-            //hay que seleccionar el siguiente a ver;
             current = EstimatedSmallestNodeInList(open);
 
         }
         //Se acabaron las open Tiles o llegamos a la meta;
         if (current.node != goal)
         {
-            //fracaso
             return null;
         }
         Tile t = current.node;
         while (t != start)
         {
             Conection c = current.conection;
-            output.Add(c);
+            output.Add(c.toNode);
             t = c.fromNome;
         }
-        //se parte del principio
+        output.Add(start);
+
         output.Reverse();
         return output;
 
     }
+
+    public static List<Tile> AStar(Map map, Tile start, Tile goal, out int cost)
+    {
+        List<Tile> output = new List<Tile>();
+        cost = 0;
+
+        List<NodeRecord> open = new List<NodeRecord>();
+        List<NodeRecord> closed = new List<NodeRecord>();
+
+        NodeRecord startRecord = NodeRecordPool.pool.Dequeue();
+
+        startRecord.node = start;
+        startRecord.estimatedCost = GetDistance(start, goal);
+        startRecord.costSoFar = 0;
+        startRecord.conection = null;
+
+        open.Add(startRecord);
+
+        NodeRecord current = startRecord;
+
+        int width = map.GetWidth();
+        int heigth = map.GetHeigth();
+
+
+        while (open.Count > 0)
+        {
+            if (current.node == goal)
+            {
+                break;
+            }
+            int x = (int)current.node.transform.position.x;
+            int y = (int)current.node.transform.position.y;
+
+
+            if (x > 0)
+            {
+                Tile endTile = map.GetTile(x - 1, y);
+                UpdateOrCreateRecordInOpenList(goal, open, closed, current, endTile);
+            }
+            if (x < width - 1)
+            {
+                Tile endTile = map.GetTile(x + 1, y);
+                UpdateOrCreateRecordInOpenList(goal, open, closed, current, endTile);
+            }
+            if (y > 0)
+            {
+                Tile endTile = map.GetTile(x, y - 1);
+                UpdateOrCreateRecordInOpenList(goal, open, closed, current, endTile);
+            }
+            if (y < heigth - 1)
+            {
+                Tile endTile = map.GetTile(x, y + 1);
+                UpdateOrCreateRecordInOpenList(goal, open, closed, current, endTile);
+            }
+            closed.Add(current);
+            open.Remove(current);
+
+            current = EstimatedSmallestNodeInList(open);
+
+        }
+        //Se acabaron las open Tiles o llegamos a la meta;
+        if (current.node != goal)
+        {
+            return null;
+        }
+
+        cost = current.costSoFar;
+
+        Tile t = current.node;
+        while (t != start)
+        {
+            Conection c = current.conection;
+            output.Add(c.toNode);
+            t = c.fromNome;
+        }
+        output.Add(start);
+
+        output.Reverse();
+        return output;
+
+    }
+
+    private static void UpdateOrCreateRecordInOpenList(Tile goal, List<NodeRecord> open, List<NodeRecord> closed, NodeRecord current, Tile endTile)
+    {
+        if (CheckTileInOpenList(goal, open, current, endTile)) { }
+        else if (CheckTileInClosedList(goal, open, closed, current, endTile)) { }
+        else
+        {
+            NodeRecord newRecord = NodeRecordPool.pool.Dequeue();
+            newRecord.node = endTile;
+            newRecord.costSoFar = current.costSoFar + endTile.terrain.movementCost;
+            newRecord.estimatedCost = GetDistance(endTile, goal) + newRecord.costSoFar;
+            newRecord.conection = new Conection(current.node, endTile);
+            open.Add(newRecord);
+        }
+    }
+
+    private static bool CheckTileInClosedList(Tile goal, List<NodeRecord> open, List<NodeRecord> closed, NodeRecord current, Tile endTile)
+    {
+        if (Contains(closed, endTile))
+        {
+            int newCostSoFar = endTile.terrain.movementCost + current.costSoFar;
+            NodeRecord oldRecord = Find(closed, endTile);
+            if (oldRecord.costSoFar > newCostSoFar)
+            {
+                NodeRecord newRecord = oldRecord;
+                newRecord.costSoFar = newCostSoFar;
+                newRecord.estimatedCost = GetDistance(endTile, goal) + newRecord.costSoFar;
+                newRecord.conection = new Conection(current.node, endTile);
+
+                closed.Remove(oldRecord);
+                open.Add(newRecord);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    private static bool CheckTileInOpenList(Tile goal, List<NodeRecord> open, NodeRecord current, Tile endTile)
+    {
+        if (Contains(open, endTile))
+        {
+            int newCostSoFar = endTile.terrain.movementCost + current.costSoFar;
+            NodeRecord oldRecord = Find(open, endTile);
+            if (oldRecord.costSoFar > newCostSoFar)
+            {
+                NodeRecord newRecord = oldRecord;
+                newRecord.node = endTile;
+                newRecord.costSoFar = newCostSoFar;
+                newRecord.estimatedCost = GetDistance(endTile, goal) + newRecord.costSoFar;
+                newRecord.conection = new Conection(current.node, endTile);
+
+                open.Add(newRecord);
+                open.Remove(oldRecord);
+            }
+            return true;
+        }
+        return false;
+    }
+
+
+
+
+
 
     static NodeRecord EstimatedSmallestNodeInList(List<NodeRecord> list)
     {

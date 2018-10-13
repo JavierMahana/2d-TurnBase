@@ -13,6 +13,7 @@ public class MapGenerator : MonoBehaviour {
     void Awake()
     {
         GenerateMap();
+        DontDestroyOnLoad(this);
    
     }
 
@@ -26,6 +27,9 @@ public class MapGenerator : MonoBehaviour {
 
         GenerateByTexture(width,heigth,map);
         CreateCoverMesh(width, heigth, map);
+
+        
+        NodeRecordPool.InstantiatePool(width, heigth);
 
     }
 

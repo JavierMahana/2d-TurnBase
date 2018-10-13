@@ -5,61 +5,43 @@ using UnityEngine;
 
 public class Selector : MonoBehaviour {
 
-    public Tile tileSelected;
-    
+    public static Tile tileSelected;
+
+    [SerializeField]
     Tile previouslySelected;
     Map map;
 
-    public event Action<Unit> selectionEvent;
+    public event Action<Tile> selectionEvent;
     public event Action deselectEvent;
     
 
-	// Use this for initialization
 	void Start () {
-        previouslySelected = tileSelected;
+        tileSelected = previouslySelected;
         map = GameObject.FindObjectOfType<Map>().GetComponent<Map>();
 	}
 	
 	void Update ()
     {
         Select();
-        NotifyChanges();
+        NotifySelectionChanges();
 	}
-    
 
-
-    void NotifyChanges()
+    void NotifySelectionChanges()
     {
         if (TheSelectionHasChange())
         {
-
-            
-            if (previouslySelected.isOcupied)
+            if (deselectEvent != null)
             {
-                if (deselectEvent != null)
-                {
-                    deselectEvent();
-                }
+                deselectEvent();
             }
-
-
-            if (tileSelected.isOcupied)
+            if (selectionEvent != null)
             {
-                if (selectionEvent != null)
-                {
-                    selectionEvent(tileSelected.unitAbove);
-                }
-            }
-            else
-            {
-                if (deselectEvent != null)
-                {
-                    deselectEvent();
-                }
+                selectionEvent(tileSelected);
             }
         }
     }
 
+    
 
     void Select()
     {
@@ -73,6 +55,10 @@ public class Selector : MonoBehaviour {
             {
                 int x = Mathf.FloorToInt(hit.point.x);
                 int y = Mathf.FloorToInt(hit.point.y);
+                if (x > map.GetWidth() || y > map.GetHeigth())
+                {
+                    return;
+                }
                 tileSelected = map.GetTile(x, y);
             }
 
@@ -80,14 +66,13 @@ public class Selector : MonoBehaviour {
         
     }
 
-    bool TheSelectionHasChange()
+    public bool TheSelectionHasChange()
     {
         if (previouslySelected != tileSelected)
         {
             previouslySelected = tileSelected;
             return true;
         }
-        previouslySelected = tileSelected;
         return false;
     }
 
